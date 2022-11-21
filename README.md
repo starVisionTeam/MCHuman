@@ -40,7 +40,6 @@
   @article{MCHuman,
     title     = {Squeezing Multiple Cues from a Single Image for Clothed 3D Human Reconstruction},
     author    = {Liu, Leyuan and Sun, Jianchi and Gao, Yunqi and Chen, Jingying.},
-    booktitle = {IEEE Transaction on Multimedia},
   }
   ```
 
@@ -74,8 +73,8 @@
 
   ## Acknowledgment
 
-  Note that some code of this repo is heavily based on GeoPIFu, while the source code of squeezing cues is original from PyMAF, pix2pixHD, and openpose . We thank the authors for their great work!
+  Note that some code of this repo is based on GeoPIFu, PyMAF, pix2pixHD, and openpose . We thank the authors for their great work!
 
 
   ## Contact
-  - If you have some troubles when running this repo, please do not hesitate to send an E-mail to me (Jianchi Sun [(sunjc0306@qq.com)](mailto:sunjc0306@qq.com)).
+  - If you have any trouble when using this repo, please do not hesitate to send an E-mail to Jianchi Sun (sunjc0306@qq.com).
