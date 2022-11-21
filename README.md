@@ -1,7 +1,7 @@
 - <p align="center">
     <h1 align="center">Squeezing Multiple Cues from a Single Image for Clothed 3D Human Reconstruction</h1>
     <h4 align="center">
-      <a href="http://faculty.ccnu.edu.cn/2012980050/"><strong>Leyuan liu</strong></a>
+      <a href="http://faculty.ccnu.edu.cn/2012980050/"><strong>Leyuan Liu</strong></a>
         .
       <a href="http://sunjc0306.github.io"><strong>Jianchi Sun</strong></a>
         .
