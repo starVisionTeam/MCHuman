@@ -43,7 +43,7 @@
   ```
   
   ## Environments
-  This code has tested with PyTorch 1.4.0 and CUDA 10.1.  on Ubuntu 18.04.
+  This code has been tested with PyTorch 1.4.0 and CUDA 10.1.  on Ubuntu 18.04.
 
 
   ## Installation
