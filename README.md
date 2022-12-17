@@ -13,8 +13,7 @@
     <h2 align="center">Submitted to IEEE Transaction on Multimedia</h2>
   </p>
 
-  This repository contains a PyTorch implementation of "Squeezing Multiple Cues from a Single Image for Clothed 3D Human Reconstruction". Tested with PyTorch 1.4.0 on Ubuntu 18.04, CUDA 10.1. 
-
+  This repository contains a PyTorch implementation of "Squeezing Multiple Cues from a Single Image for Clothed 3D Human Reconstruction". 
     <div align="center">
       <img src="./Assets/overview.png" alt="overview" width="100%">
     </div>
@@ -42,6 +41,10 @@
     author    = {Liu, Leyuan and Sun, Jianchi and Gao, Yunqi and Chen, Jingying.},
   }
   ```
+  
+  ## Environments
+  This code has tested with PyTorch 1.4.0 and CUDA 10.1.  on Ubuntu 18.04.
+
 
   ## Installation
   Please run the following commands to download the necessary assets (including the pre-trained models):
