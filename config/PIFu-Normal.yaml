@@ -1,0 +1,49 @@
+name: "HEI-HumanNormalTH1"
+test_mode: True
+batch_size: 4
+num_workers: 8
+pin_memory: False
+pre_smpl: True
+pre_smpl_path: '/media/sunjc0306/Elements SE/experimental results/newPaMIR/optim_smpl'
+results_path: "/mnt/dataset/GeoRender/PIFuNormal"
+keys_input: ["img","mask","smpl","sample_data","normal_F","normal_B"]
+meshDirSearch: "/mnt/GeoRender"
+datasetDir: "/mnt/GeoRender"
+deepVoxelsDir: "/media/sunjc0306/KESU/dataset/TH2.0P1/HEI/deepVoxels"
+normalDir: "/mnt/dataset/GeoRender/normal"
+
+totalNumFrame: 108720
+trainingDataRatio: 0.8
+splitIdx: 0
+splitNum: 5
+lr: 2e-4
+all_mesh: False
+checkpoints_path: "/mnt/checkpoints_path"
+color_loss_type: 'l1'
+continue_train: False
+dataType: test
+dataTypeZip: both
+debug: False
+deepVoxels_c_len: 56
+deepVoxels_fusion: None
+num_samples: 10000
+smpl_channle: 3
+orthogonal: False
+epoch_offline_len: 15
+epoch_range: [0, 15]
+freq_plot: 10
+freq_save: 50000
+freq_save_ply: 100
+hg_down: ave_pool
+hourglass_dim: 256
+learning_rate: 0.001
+loadSize: 512
+load_checkpoint_path: "/mnt/checkpoints_path/PIFu-Normal/HEINormal/netG_epoch_4_10871"
+##"/mnt/checkpoints_path/TH1pifupoint"
+load_from_multi_GPU_shape: True
+load_netC_checkpoint_path: None
+mlp_dim: [257, 1024, 512, 256, 128, 1]
+sigma: 5.0
+upsample_mode: bicubic
+z_size: 200.0
+clean_mesh: False # if True, will remove floating pieces
