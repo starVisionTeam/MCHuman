@@ -19,7 +19,7 @@
       <img src="./Assets/overview.png" alt="overview" width="100%">
     </div>
 
-  **NOTE**: The current model is trained in a low-resolution dataset called THuman1.0, which contains simple poses and clothes. Fortunately, our method also achieves state-of-the-art performance on human images with complex poses and loose clothes.
+  **NOTE**: The current model is trained in a low-resolution dataset called THuman1.0, which contains simple poses and clothes. Fortunately, our method achieves state-of-the-art performance on human images with complex poses and loose clothes.
 
   **The code is released, but  not complete. We are still updating it.**
 
