@@ -65,6 +65,7 @@ python Demo.py -- work_dir img_path -- smpl_dir gtSMPL_name
   ```
 e.g.,
   ```
+  
   ## Train the network directly using all cues
   Please run the following command to train the network:
   Coming Soon！
