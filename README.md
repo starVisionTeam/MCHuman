@@ -59,7 +59,7 @@ python Demo.py -- work_dir img_name
   ```
 e.g.,
 
-(2) Testing on a single image with SMPL model
+(2) Testing on a single image with the ground-truth SMPL model
  ```bash
 python Demo.py -- work_dir img_path -- smpl_dir gtSMPL_name  
   ```
