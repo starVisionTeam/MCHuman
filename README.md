@@ -63,7 +63,7 @@ e.g., python Demo.py -- input_dir ./img.png
  ```bash
 python Demo.py -- input_dir img_path -- SMPL_dir gtSMPL_path
  ```
-e.g., python Demo.py -- input_dir ./img.png -- SMPL_dir ./gtSMPL.obj
+e.g., python Demo.py -- input_dir ./img.png -- SMPL_dir ./gtSMPL.pkl
 
 
   ## Train the network directly using all cues

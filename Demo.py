@@ -394,9 +394,9 @@ if __name__ == '__main__':
     parser.add_argument('-results_path  ', '--results_path ', type=str,default='./result')
     arg = parser.parse_args()
     if arg.SMPL_dir is None:
-        singTime=test.demo(arg.input_dir,arg.results_path,save_inter=False)
+        singTime = test.demo(arg.input_dir,arg.results_path,save_inter=False)
     else:
-
+        singTime = test.demo_with_gt(arg.input_dir,arg.SMPL_dir,arg.results_path,save_inter=False)
     print('The cost of time :',total_tima/count)
     # rgbPath='/media/sunjc0306/KESU/dataset/Buff/BuffRender/rgbImage/000000.jpg'
     # maskPath='/media/sunjc0306/KESU/dataset/Buff/BuffRender/maskImage/000000.jpg'
