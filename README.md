@@ -55,12 +55,14 @@ You can download our provided pre-trained models from  [Download link](链接：
   ## Run Demo
 (1) Testing on a single image without SMPL model
  ```bash
-python Demo.py -- input_dir img_path
+python Demo.py -- work_dir img_name
   ```
 e.g.,
 
 (2) Testing on a single image with SMPL model
-python Demo.py -- input_dir img_path -- input_dir gtSMPL_path    
+ ```bash
+python Demo.py -- work_dir img_path -- smpl_dir gtSMPL_name  
+  ```
 e.g.,
   ```
   ## Train the network directly using all cues
