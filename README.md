@@ -77,7 +77,7 @@ You can download our provided pre-trained models from  [Download link](链接：
 
   ## Acknowledgments
 
-  Note that some code of this repo is based on GeoPIFu, PyMAF, pix2pixHD, and openpose . We thank the authors for their great work!
+  Note that some code of this repo is based on GeoPIFu, PyMAF, pix2pixHD, and OpenPose. We thank the authors for their great work!
 
 
   ## Contact
