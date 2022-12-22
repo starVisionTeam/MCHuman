@@ -287,139 +287,145 @@ class MCHumanDemo(object):
 
         return optimed_betas, optimed_pose, optimed_orient, optimed_trans, smpl_verts
 
-    def demo_w_b_s(self,image_path,mask_path,smplPath,normal_F_Path,normal_B_Path):
-        # smpl_vpath="./optim/FRONT_smpl_v.mat"
-        smplMesh = load_obj_data(smplPath)
-        # save_obj_data(smplNew, smplPathNew)  # notice that face's vertex idx should start from +1, not 0
-        voxeltool = MeshVoxelization(1., (128, 192, 128), 7)
-        semantictool = SematicVoxelization(consts.smpl_vertex_code, smplMesh['f'], 1., (128, 192, 128), 0.05, 7).cuda()
-        occ_volume = voxeltool(torch.from_numpy(smplMesh['v']).float().cuda(),
-                               torch.from_numpy(smplMesh['f']).float().cuda())
-        occ_volume = binary_fill_from_corner_3D(occ_volume.cpu().numpy().astype(np.uint8))
-        smplSemVoxels, _ = semantictool(torch.from_numpy(smplMesh['v']).float().cuda(),
-                                        torch.from_numpy(occ_volume).float().cuda())
-        render={}
-        render['smplSemVoxels']=smplSemVoxels
-        if not os.path.exists(mask_path):
-            print("Can not find %s!!!" % (mask_path))
-            pdb.set_trace()
-        mask_data = np.round((cv2.imread(mask_path)[:,:,0]).astype(np.float32)/255.) # (1536, 1024)
-        mask_data_padded = np.zeros((max(mask_data.shape), max(mask_data.shape)), np.float32) # (1536, 1536)
-        mask_data_padded[:,mask_data_padded.shape[0]//2-min(mask_data.shape)//2:mask_data_padded.shape[0]//2+min(mask_data.shape)//2] = mask_data
-        mask_data_padded = cv2.resize(mask_data_padded, (self.opt.loadSize,self.opt.loadSize), interpolation=cv2.INTER_NEAREST)
-        mask_data_padded = Image.fromarray(mask_data_padded)
-        mask_data_padded = transforms.ToTensor()(mask_data_padded).float()
+    def demo_with_gt(self,img_path,smpl_path,results_path,save_inter=True):
+        input_data={}
+        img_icon, img_hps, img_ori, img_mask, uncrop_param = process_image(img_path,self.det, self.opt.loadSize)
+        img_icon=img_icon.unsqueeze(0).to(self.cuda)
+        img_mask=img_mask.unsqueeze(0).to(self.cuda)
+        img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
+        if save_inter:
+            img_BGR = ((np.transpose(img_icon[0].detach().cpu().numpy(), (1, 2, 0)) * 0.5 + 0.5) * 255.).astype(np.uint8)[:, :,::-1]
+            cv2.imwrite('%s/%s_rgb.jpg' % (results_path,img_name), img_BGR)
+            # return 0.0
+            img_BGR = ((np.transpose(img_mask[0].detach().cpu().numpy(), (1, 2, 0))) * 255.).astype(np.uint8)[:, :, ::-1]
+            cv2.imwrite('%s/%s_mask.jpg' % (results_path,img_name), img_BGR)
+        start_time=time.time()
+        with torch.no_grad():
+            normal_F=self.nmlFNet(img_icon)* img_mask
+            normal_B=self.nmlBNet(img_icon)* img_mask
+        input_data['img']=torch.cat([img_icon,normal_F,normal_B],dim=1)
+        if save_inter:
+            img_BGR = ((np.transpose(normal_F[0].detach().cpu().numpy(), (1, 2, 0)) * 0.5 + 0.5) * 255.).astype(np.uint8)[:, :,::-1]
+            cv2.imwrite('%s/%s_normal_F.jpg' % (results_path,img_name), img_BGR)
+            img_BGR = ((np.transpose(normal_B[0].detach().cpu().numpy(), (1, 2, 0)) * 0.5 + 0.5) * 255.).astype(np.uint8)[:, :,::-1]
+            cv2.imwrite('%s/%s_normal_B.jpg' % (results_path,img_name), img_BGR)
+        with torch.no_grad():
+            if os.path.exists(smpl_path):
+                with open(smpl_path, "rb") as f:
+                    data_smplRefined = pkl.load(f)
+                    optimed_orient = torch.from_numpy(data_smplRefined['global_orient'])[None,None].to(self.cuda)
+                    optimed_pose = torch.from_numpy(data_smplRefined['body_pose'])[None].to(self.cuda)
+                    optimed_betas = torch.from_numpy(data_smplRefined['betas'])[None].to(self.cuda)
+                    optimed_trans = torch.from_numpy(data_smplRefined['trans']).to(self.cuda)
+                    data['scale'] = torch.from_numpy(data_smplRefined['scale']).to(self.cuda)
+            gt_vert_cam = data['scale'] * self.tet_smpl(torch.cat([optimed_orient,optimed_pose],dim=1), optimed_betas) + optimed_trans
+            vol = self.voxelization(gt_vert_cam/2)
+        if save_inter:
+            save_obj_mesh('%s/%s_optim_smpl.obj' % (results_path,img_name), smpl_verts[0].detach().cpu().numpy(),
+                          self.faces[0].detach().cpu().numpy())
 
-        if not os.path.exists(image_path):
-            print("Can not find %s!!!" % (image_path))
-            pdb.set_trace()
-        image = cv2.imread(image_path)[:, :, ::-1]  # (1536, 1024, 3), np.uint8, {0,...,255}
-        image_padded = np.zeros((max(image.shape), max(image.shape), 3), np.uint8)  # (1536, 1536, 3)
-        image_padded[:,
-        image_padded.shape[0] // 2 - min(image.shape[:2]) // 2:image_padded.shape[0] // 2 + min(image.shape[:2]) // 2,
-        :] = image  # (1536, 1536, 3)
-        # resize to (512, 512, 3), np.uint8
-        image_padded = cv2.resize(image_padded, (self.opt.loadSize, self.opt.loadSize))
-        image_padded = Image.fromarray(image_padded)
-        image_padded = self.to_tensor(image_padded)
-        image_padded = mask_data_padded.expand_as(image_padded) * image_padded
-        # render['img'] = image_padded
-        if not os.path.exists(normal_F_Path):
-            print("Can not find %s!!!" % (normal_F_Path))
-            pdb.set_trace()
-        # read data BGR -> RGB, np.uint8
-        normal = cv2.imread(normal_F_Path)[:, :, ::-1]  # (1536, 1024, 3), np.uint8, {0,...,255}
-        normal_F = np.zeros((max(normal.shape), max(normal.shape), 3), np.uint8)  # (1536, 1536, 3)
-        normal_F[:,
-        normal_F.shape[0] // 2 - min(normal.shape[:2]) // 2:normal_F.shape[0] // 2 + min(normal.shape[:2]) // 2,
-        :] = normal  # (1536, 1536, 3)
-        # resize to (512, 512, 3), np.uint8
-        normal_F = cv2.resize(normal_F, (self.opt.loadSize, self.opt.loadSize))
-        normal_F = Image.fromarray(normal_F)
-        normal_F = self.to_tensor(normal_F)
-        normal_F = mask_data_padded.expand_as(normal_F) * normal_F
-
-        if not os.path.exists(normal_B_Path):
-            print("Can not find %s!!!" % (normal_B_Path))
-            pdb.set_trace()
-        # read data BGR -> RGB, np.uint8
-        normal = cv2.imread(normal_B_Path)[:, :, ::-1]  # (1536, 1024, 3), np.uint8, {0,...,255}
-        normal_B = np.zeros((max(normal.shape), max(normal.shape), 3), np.uint8)  # (1536, 1536, 3)
-        normal_B[:,
-        normal_B.shape[0] // 2 - min(normal.shape[:2]) // 2:normal_B.shape[0] // 2 + min(normal.shape[:2]) // 2,
-        :] = normal  # (1536, 1536, 3)
-        # resize to (512, 512, 3), np.uint8
-        normal_B = cv2.resize(normal_B, (self.opt.loadSize, self.opt.loadSize))
-        normal_B = Image.fromarray(normal_B)
-        normal_B = self.to_tensor(normal_B)
-        normal_B = mask_data_padded.expand_as(normal_B) * normal_B
-        render['img'] = torch.cat([image_padded, normal_F, normal_B], dim=0)
+        with torch.no_grad():
+            self.ENet.filter(255*vol)
+            input_data['deepVoxels'] = self.ENet.im_feat_list[-1]  # torch.float32, (B=1,C=8,D=32,H=48,W=32), etc. deepVoxels
+        if save_inter:
+            deepVoxels = input_data['deepVoxels'][0].detach().cpu().numpy()  # (C=8,D=32,H=48,W=32)
+            deepVoxels = np.transpose(deepVoxels, (
+                0, 3, 2, 1))  # (C=8,W=32,H=48,D=32), C-XYZ, np.float32, has both posi/neg values
+            np.save('%s/%s_deepVoxels.npy' % (results_path,img_name), deepVoxels)  # 1.6M
+        # get est. occu.
+        if save_inter:
+            with torch.no_grad():
+                save_path ='%s/%s_meshCoarse.obj' % (results_path,img_name)
+                self.ENet.est_occu()
+                pred_occ = self.ENet.get_preds()  # torch.float32, BCDHW, (B,1,128,192,128), est. occupancy
+                pred_occ = pred_occ[0, 0].detach().cpu().numpy()  # DHW
+                pred_occ = np.transpose(pred_occ, (2, 1, 0))  # (W=128,H=192,D=128), XYZ, np.float32, 0. ~ 1. # WHD, XYZ
+                verts, faces, normals, _ = measure.marching_cubes_lewiner(pred_occ,level=0.5)  # https://scikit-image.org/docs/dev/api/skimage.measure.html#marching-cubes-lewiner
+                verts = verts * 2.0  # this is only to match the verts_canonization function
+                # verts = verts_canonization(verts=verts, dim_w=pred_occ.shape[0], dim_h=pred_occ.shape[1])
+                save_obj_mesh(save_path,verts,faces[:,::-1])
         if True:
             projection_matrix = np.identity(4)
             projection_matrix[0, 0] = 1. / consts.h_normalize_half  # const ==  2.
             projection_matrix[1, 1] = 1. / consts.h_normalize_half  # const ==  2.
             projection_matrix[2, 2] = -1. / consts.h_normalize_half  # const == -2., to get inverse depth
             calib = torch.Tensor(projection_matrix).float()
-            render['calib'] = calib
-        return render
-    def test_demo(self,data,obj_result):
+            input_data['calib'] = calib.unsqueeze(0).to(self.cuda)
         with torch.no_grad():
-            self.ENet.eval()
-            smplSemVoxels = data['smplSemVoxels'].to(device=self.cuda)
-            smplSemVoxels = smplSemVoxels.permute((3, 2, 1, 0)).unsqueeze(0)  # (V=1, C=3, H=512, W=512)
-            self.ENet.filter(smplSemVoxels)
-            deepVoxels = self.ENet.im_feat_list[-1]
-            self.INet.filter(data['img'])
+            self.INet.filter(input_data['img'])
             try:
                 coords, mat = create_grid(self.opt.resolution_x, self.opt.resolution_y, self.opt.resolution_z,
                                           self.B_MIN, self.B_MAX, transform=None)
+
                 def eval_func(points):
                     points = np.expand_dims(points, axis=0)  # (1,         3, num_samples)
                     points = np.repeat(points, 1, axis=0)  # (num_views, 3, num_samples)
                     samples = torch.from_numpy(points).to(device=self.cuda).float()  # (num_views, 3, num_samples)
-                    self.INet.query(points=samples, calibs=data['calib'],
-                                    deepVoxels=deepVoxels)  # calib_tensor is (num_views, 4, 4)
+                    self.INet.query(points=samples, calibs=input_data['calib'],
+                                    deepVoxels=input_data['deepVoxels'])  # calib_tensor is (num_views, 4, 4)
                     pred = self.INet.preds[0][0]  # (num_samples,)
                     return pred.detach().cpu().numpy()
+
                 sdf = eval_grid_octree(coords, eval_func, num_samples=self.opt.num_samples)
                 verts, faces, normals, values = measure.marching_cubes_lewiner(sdf, 0.5)
+                # transform verts into world coordinate system
                 verts = np.matmul(mat[:3, :3], verts.T) + mat[:3,3:4]  # (3,N), convert verts from voxel-space into mesh-coords
                 verts = verts.T  # (N,3)
-                save_obj_mesh(obj_result, verts, faces)
+
+                obj_result = '%s/%s_meshRefined.obj' % (results_path, img_name)
+                save_obj_mesh(obj_result, verts*np.array([1.,-1.,-1.]), faces[:,::-1])
+
+                verts_tensor = torch.from_numpy(verts.T).unsqueeze(0).to(device=self.cuda).float()  # (1, N, 3)
+                xyz_tensor = self.INet.projection(verts_tensor, input_data['calib'][:1])  # （1, 3, N） Tensor of xyz coordinates in the image plane of (-1,1) zone and of the-first-view
+                uv = xyz_tensor[:, :2, :]  # (1, 2, N) for xy, float -1 ~ 1
+                color = self.INet.index(img_icon[:1], uv).detach().cpu().numpy()[0].T  # (N, 3), RGB, float -1 ~ 1
+                color = color * 0.5 + 0.5  # (N, 3), RGB, float 0 ~ 1
+                save_obj_mesh_with_color('%s/%s_color.obj' % (results_path, img_name), verts, faces, color)
                 # return sdf
             except Exception as e:
                 print(e)
                 print('Can not create marching cubes at this time.')
+        return time.time()-start_time
 if __name__ == '__main__':
     test=MCHumanDemo()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-input_dir ', '--input_dir', type=str)
+    parser.add_argument('-SMPL_dir  ', '--SMPL_dir ', type=str)
+    parser.add_argument('-results_path  ', '--results_path ', type=str,default='./result')
+    arg = parser.parse_args()
+    if arg.SMPL_dir is None:
+        singTime=test.demo(arg.input_dir,arg.results_path,save_inter=False)
+    else:
+
+    print('The cost of time :',total_tima/count)
     # rgbPath='/media/sunjc0306/KESU/dataset/Buff/BuffRender/rgbImage/000000.jpg'
     # maskPath='/media/sunjc0306/KESU/dataset/Buff/BuffRender/maskImage/000000.jpg'
     # smplPath="/media/sunjc0306/KESU/dataset/Buff/WoGtPaMIR/000000_smpl.obj"
     # normal_F_Path='/media/sunjc0306/KESU/dataset/Buff/normal_normal_F/000000.jpg'
     # normal_B_Path='/media/sunjc0306/KESU/dataset/Buff/normal_normal_B/000000.jpg'
-    img_path_list=glob('/home/sunjc0306/HEI-Human/Pin/*')
-    img_path_list.sort(reverse=True)
-    count=0
-    timeStart=time.time()
-    total_tima=0
-    results_path='/home/sunjc0306/HEI-Human/Pin'
-    for img_path in img_path_list:
-        # img=cv2.imread(img_path)
-        # img_path="/media/sunjc0306/KESU/dataset/pingterest/ReImage/%6d.jpg"%(count)
-        # cv2.imwrite(img_path,img)
-        # img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
-        # save_path = '%s/%s_meshRefined.obj' % (results_path, img_name)
-        # if os.path.exists(save_path):
-        #     continue
-        singTime=test.demo(img_path,results_path,save_inter=False)
-        count += 1
-        hrsPassed = (time.time() - timeStart) / 3600.
-        hrsEachIter = hrsPassed / count
-        numItersRemain = len(img_path_list) - count
-        hrsRemain = numItersRemain * hrsEachIter  # hours that remain
-        minsRemain = hrsRemain * 60.  # minutes that remain
-        img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
-        total_tima+=singTime
-        print("%s| %.4f | inference: %03d-%03d-%03d | remains %.3f m(s) ......" % (img_name,singTime,0,count,len(img_path_list)-count, minsRemain))
-    print('The cost of time :',total_tima/count)
+    # img_path_list=glob('/home/sunjc0306/HEI-Human/Pin/*')
+    # img_path_list.sort(reverse=True)
+    # count=0
+    # timeStart=time.time()
+    # total_tima=0
+    # results_path='/home/sunjc0306/HEI-Human/Pin'
+    # for img_path in img_path_list:
+    #     # img=cv2.imread(img_path)
+    #     # img_path="/media/sunjc0306/KESU/dataset/pingterest/ReImage/%6d.jpg"%(count)
+    #     # cv2.imwrite(img_path,img)
+    #     # img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
+    #     # save_path = '%s/%s_meshRefined.obj' % (results_path, img_name)
+    #     # if os.path.exists(save_path):
+    #     #     continue
+    #     singTime=test.demo(img_path,results_path,save_inter=False)
+    #     count += 1
+    #     hrsPassed = (time.time() - timeStart) / 3600.
+    #     hrsEachIter = hrsPassed / count
+    #     numItersRemain = len(img_path_list) - count
+    #     hrsRemain = numItersRemain * hrsEachIter  # hours that remain
+    #     minsRemain = hrsRemain * 60.  # minutes that remain
+    #     img_name = img_path.split("/")[-1].rsplit(".", 1)[0]
+    #     total_tima+=singTime
+    #     print("%s| %.4f | inference: %03d-%03d-%03d | remains %.3f m(s) ......" % (img_name,singTime,0,count,len(img_path_list)-count, minsRemain))
+    # print('The cost of time :',total_tima/count)
 
