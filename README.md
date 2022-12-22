@@ -53,9 +53,13 @@ You can download our provided pre-trained models from  [Download link](链接：
 
 
   ## Run Demo
-  In ```test_example```, we provide two examples, which contain an image with a SMPL model fitted to the image and another image from the Internet. 
-  ```bash
-  python demo.py - input_dir                        
+(1) Testing on a single image without SMPL model
+python Demo.py -- input_dir img_path
+e.g.,
+
+(2) Testing on a single image with SMPL model
+python Demo.py -- input_dir img_path -- input_dir gtSMPL_path    
+e.g.,
   ```
   ## Train the network directly using all cues
   Please run the following command to train the network:
