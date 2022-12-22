@@ -61,7 +61,7 @@ e.g., python Demo.py -- input_dir ./img.png
 
 (2) Testing on a single image with the ground-truth SMPL model
  ```bash
-python Demo.py -- input_dir img_path -- input_dir gtSMPL_path
+python Demo.py -- input_dir img_path -- SMPL_dir gtSMPL_path
   ```
 e.g., python Demo.py -- input_dir ./img.png -- SMPL_dir ./gtSMPL.obj
  
