@@ -54,7 +54,9 @@ You can download our provided pre-trained models from  [Download link](链接：
 
   ## Run Demo
 (1) Testing on a single image without SMPL model
+ ```bash
 python Demo.py -- input_dir img_path
+  ```
 e.g.,
 
 (2) Testing on a single image with SMPL model
