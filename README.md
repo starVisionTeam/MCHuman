@@ -10,7 +10,7 @@
       <a href="http://nercel.ccnu.edu.cn/info/1072/3077.htm"><strong>Jingying Chen</strong></a>
       </h4>
     <h3 align="center">National Engineering Research Center for E-Learning, Central China Normal University</h3>
-    <h2 align="center">Submitted to Pattern Recognition</h2>
+    <h2 align="center">Submitted to Applied Intelligence</h2>
   </p>
 
 This repository contains a PyTorch implementation of "Squeezing Multiple Cues from a Single Image for Clothed 3D Human Reconstruction". 
